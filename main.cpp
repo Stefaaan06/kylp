@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <algorithm>
+#include <thread>
 
 /*
  *
@@ -18,6 +20,30 @@ class Command {
 public:
     virtual void execute() = 0;
     virtual void undo() = 0;
+};
+
+class OpenClawCommand : public Command {
+public:
+    void execute() override {
+        mrp(3, 200, 280);
+        bmd(3);
+    }
+
+    void undo() override {
+
+    }
+};
+
+class CloseClawCommand : public Command {
+public:
+    void execute() override {
+        mrp(3, 200, -280);
+        bmd(3);
+    }
+
+    void undo() override {
+
+    }
 };
 
 class TurnCommand : public Command {
@@ -66,8 +92,8 @@ public:
     }
 
     void undo() override {
-        mrp(0, -speed, -distance);
-        mrp(1, -speed, -distance);
+        mrp(0, speed, -distance);
+        mrp(1, speed, -distance);
         bmd(0);
         bmd(1);
     }
@@ -92,6 +118,7 @@ public:
     }
 
     void undoCommands() {
+        std::reverse(history.begin(), history.end());
         for(auto& command : history){
             command->undo();
         }
@@ -134,7 +161,17 @@ private:
 
 public:
     Aufgabe1() : taskStarted(false) {
-        controller->addCommand(new DriveCommand(300, 1000));
+
+        controller->addCommand(new DriveCommand(3000, 3600));
+        controller->addCommand(new TurnCommand(3000, 1100));
+        controller->addCommand(new DriveCommand(3000, 2000));
+        controller->addCommand(new OpenClawCommand());
+        controller->addCommand(new TurnCommand(3000, 150));
+        controller->addCommand(new DriveCommand(3000, 6800));
+        controller->addCommand(new TurnCommand(3000, 150));
+        controller->addCommand(new DriveCommand(3000, 6800));
+        controller->addCommand(new TurnCommand(3000, 1180));
+        controller->addCommand(new DriveCommand(3000, 2500));
     }
 
     void start() override {
@@ -170,7 +207,7 @@ private:
 
 public:
     Aufgabe2() : taskStarted(false) {
-        controller->addCommand(new TurnCommand(800, 1000));
+        controller->addCommand(new DriveCommand(100, 100));
     }
 
     void start() override {
@@ -194,6 +231,9 @@ public:
         std::cout<<"penis"<<std::endl;
     }
 
+    ~Aufgabe2(){
+        delete controller;
+    }
 };
 
 class Aufgabe3 : public Task {
@@ -204,7 +244,7 @@ private:
 
 public:
     Aufgabe3() : taskStarted(false) {
-        controller->addCommand(new TurnCommand(500, 500));
+        controller->addCommand(new DriveCommand(100, 100));
 
     }
 
@@ -243,11 +283,11 @@ bool checkTaskCompletion(Task& task, int timeout) {
     clock_t start_time = clock();
     while (static_cast<double>(clock() - start_time) / CLOCKS_PER_SEC < timeout) {
         if (task.isCompleted()) {
-            task.returnToStart();
+            //task.returnToStart();
             return true;
         }
     }
-    task.returnToStart();
+    //task.returnToStart();
     return false; // Return false if the task did not complete in time
 }
 
@@ -333,11 +373,15 @@ public:
 };
 
 
-
 int main() {
+
+    while(3000 < analog(1)){
+        msleep(100);
+    }
 
     TaskState currentState = Aufgabe1State;
     actionSequencer(currentState);
+
 
     return 0;
 
