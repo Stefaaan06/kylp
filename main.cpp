@@ -7,6 +7,43 @@
 #include <thread>
 
 /*
+ * Arm State Manager
+ */
+
+class ArmStateManager{
+public:
+    enum ArmState{
+        base,
+        middle,
+        up
+    };
+
+    ArmStateManager(){
+        ArmState startState = base;
+        armStateLoop(startState);
+    };
+
+    void armStateLoop(ArmState state){
+        while(true){
+            switch(state){
+                case(base):
+                    //
+                    break;
+                case(middle):
+                    //apply some power
+                    break;
+                case(up):
+                    //
+                    break;
+            }
+        }
+    }
+};
+
+
+
+
+/*
  *
   ___                                    _        _ __        _    _
  / __| ___  _ __   _ __   __ _  _ _   __| |      | '_ \ __ _ | |_ | |_  ___  _ _  _ _
@@ -15,11 +52,24 @@
 
  */
 
+
 // Command template
 class Command {
 public:
     virtual void execute() = 0;
     virtual void undo() = 0;
+};
+
+
+class ClawBaseCommand : public Command {
+public:
+    void execute() override {
+
+    }
+
+    void undo() override {
+
+    }
 };
 
 class OpenClawCommand : public Command {
@@ -160,18 +210,8 @@ private:
     clock_t start_time;
 
 public:
-    Aufgabe1() : taskStarted(false) {
-
+    Aufgabe1(ArmStateManager* armStateManager) : taskStarted(false) {
         controller->addCommand(new DriveCommand(3000, 3600));
-        controller->addCommand(new TurnCommand(3000, 1100));
-        controller->addCommand(new DriveCommand(3000, 2000));
-        controller->addCommand(new OpenClawCommand());
-        controller->addCommand(new TurnCommand(3000, 150));
-        controller->addCommand(new DriveCommand(3000, 6800));
-        controller->addCommand(new TurnCommand(3000, 150));
-        controller->addCommand(new DriveCommand(3000, 6800));
-        controller->addCommand(new TurnCommand(3000, 1180));
-        controller->addCommand(new DriveCommand(3000, 2500));
     }
 
     void start() override {
@@ -192,22 +232,25 @@ public:
 
     void returnToStart(){
         controller->undoCommands();
-        std::cout<<"penis"<<std::endl;
 
     }
 
+    ~Aufgabe1(){
+        delete controller;
+    }
 };
 
 // Similar class definitions for Aufgabe2, Aufgabe3, and ReturnToHome
 class Aufgabe2 : public Task {
+
 private:
     CommandController* controller = new CommandController();
     bool taskStarted;
     clock_t start_time;
 
 public:
-    Aufgabe2() : taskStarted(false) {
-        controller->addCommand(new DriveCommand(100, 100));
+    Aufgabe2(ArmStateManager* armStateManager) : taskStarted(false) {
+        controller->addCommand(new DriveCommand(1000, 1000));
     }
 
     void start() override {
@@ -228,7 +271,6 @@ public:
 
     void returnToStart(){
         controller->undoCommands();
-        std::cout<<"penis"<<std::endl;
     }
 
     ~Aufgabe2(){
@@ -237,14 +279,15 @@ public:
 };
 
 class Aufgabe3 : public Task {
+
 private:
     CommandController* controller = new CommandController();
     bool taskStarted;
     clock_t start_time;
 
 public:
-    Aufgabe3() : taskStarted(false) {
-        controller->addCommand(new DriveCommand(100, 100));
+    Aufgabe3(ArmStateManager* armStateManager) : taskStarted(false) {
+        controller->addCommand(new DriveCommand(3000, 500));
 
     }
 
@@ -266,10 +309,11 @@ public:
 
     void returnToStart(){
         controller->undoCommands();
-        std::cout<<"penis"<<std::endl;
-
     }
 
+    ~Aufgabe3(){
+        delete controller;
+    }
 };
 
 void goToNextTask(TaskState& currentState) {
@@ -279,15 +323,17 @@ void goToNextTask(TaskState& currentState) {
 }
 
 bool checkTaskCompletion(Task& task, int timeout) {
-    task.start(); // Start the task
+    task.start(); //ensure that the task is running;
+
+    //prevent the task from timeoting
     clock_t start_time = clock();
     while (static_cast<double>(clock() - start_time) / CLOCKS_PER_SEC < timeout) {
         if (task.isCompleted()) {
-            //task.returnToStart();
+            task.returnToStart();
             return true;
         }
     }
-    //task.returnToStart();
+    task.returnToStart();
     return false; // Return false if the task did not complete in time
 }
 
@@ -299,24 +345,27 @@ bool checkTaskCompletion(Task& task, int timeout) {
 
  */
 
-void actionSequencer(TaskState& currentState) {
-    Task* aufgabe1 = new Aufgabe1();
-    Task* aufgabe2 = new Aufgabe2();
-    Task* aufgabe3 = new Aufgabe3();
+void actionSequencer(TaskState& currentState, ArmStateManager* armStateManager) {
+    Task* aufgabe1 = new Aufgabe1(armStateManager);
+    Task* aufgabe2 = new Aufgabe2(armStateManager);
+    Task* aufgabe3 = new Aufgabe3(armStateManager);
 
     while (currentState != FinalState) {
         switch (currentState) {
             case Aufgabe1State:
+
                 if (checkTaskCompletion(*aufgabe1, 1)) {
                     goToNextTask(currentState);
                 }
                 break;
             case Aufgabe2State:
+
                 if (checkTaskCompletion(*aufgabe2, 1)) {
                     goToNextTask(currentState);
                 }
                 break;
             case Aufgabe3State:
+
                 if (checkTaskCompletion(*aufgabe3, 1)) {
                     goToNextTask(currentState);
                 }
@@ -375,12 +424,19 @@ public:
 
 int main() {
 
+    //wait for start light
+
+    /*
     while(3000 < analog(1)){
         msleep(100);
     }
+    */
 
+    ArmStateManager *armStateManager = new ArmStateManager();
+
+    //set state & start process
     TaskState currentState = Aufgabe1State;
-    actionSequencer(currentState);
+    actionSequencer(currentState, armStateManager);
 
 
     return 0;
