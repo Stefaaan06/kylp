@@ -6,42 +6,62 @@
 #include <algorithm>
 #include <thread>
 
-/*
- * Arm State Manager
- */
 
-class ArmStateManager{
+
+
+// Corrected enum definition to have consistent naming and added missing state
+enum ArmState{
+    Up,
+    Down // Added Down state
+};
+
+// Redesigned to be a singleton class for managing arm state
+class ArmStateManager {
+private:
+    ArmState state;
+    static ArmStateManager* instance;
+
+    ArmStateManager() : state(Base) {} // Private constructor
+
 public:
-    enum ArmState{
-        base,
-        middle,
-        up
-    };
+    // Deleted copy constructor and assignment operator to prevent copying
+    ArmStateManager(const ArmStateManager&) = delete;
+    ArmStateManager& operator=(const ArmStateManager&) = delete;
 
-    ArmStateManager(){
-        ArmState startState = base;
-        armStateLoop(startState);
-    };
+    static ArmStateManager* getInstance() {
+        if (instance == nullptr) {
+            instance = new ArmStateManager();
+        }
+        return instance;
+    }
 
-    void armStateLoop(ArmState state){
+    void ArmStateManagerLoop(){
         while(true){
+
             switch(state){
-                case(base):
-                    //
+                case(Up):
+                    mrp(3, 200, 280);
+                    bmd(3);
                     break;
-                case(middle):
-                    //apply some power
-                    break;
-                case(up):
-                    //
+                case(Down):
+                    mrp(3, -200, 280);
+                    bmd(3);
                     break;
             }
+
         }
+    }
+
+    ArmState getState() const {
+        return state;
+    }
+
+    void setState(ArmState newState) {
+        state = newState;
     }
 };
 
-
-
+ArmStateManager* ArmStateManager::instance = nullptr; // Initialize instance
 
 /*
  *
@@ -61,10 +81,26 @@ public:
 };
 
 
-class ClawBaseCommand : public Command {
+
+class ArmUp : public Command {
 public:
     void execute() override {
+        // Implement motor control to lift the arm
+        // Example: mav(motor_port, speed);
+        ArmStateManager::getInstance()->setState(Up);
+    }
 
+    void undo() override {
+
+    }
+};
+
+class ArmDown : public Command {
+public:
+    void execute() override {
+        // Implement motor control to lower the arm
+        // Example: mav(motor_port, -speed);
+        ArmStateManager::getInstance()->setState(Down);
     }
 
     void undo() override {
@@ -75,7 +111,8 @@ public:
 class OpenClawCommand : public Command {
 public:
     void execute() override {
-        mrp(3, 200, 280);
+        //analog 5
+        mrp(5, 200, 280);
         bmd(3);
     }
 
@@ -87,8 +124,8 @@ public:
 class CloseClawCommand : public Command {
 public:
     void execute() override {
-        mrp(3, 200, -280);
-        bmd(3);
+        mrp(5gt, 200, -280);
+        bmd(5);
     }
 
     void undo() override {
@@ -421,6 +458,8 @@ public:
     }
 };
 
+
+public ArmStateManager armStateManager;
 
 int main() {
 
