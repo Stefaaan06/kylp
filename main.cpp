@@ -7,13 +7,28 @@
 #include <thread>
 
 
+public int motorLeft = 0;
+public int motorRight = 1;
 
+public int armBottom = 2;
+public int armTop = 3;
+
+
+//analog!
+public int clawFront = 5;
+
+public intStartLight = 1;
+public int frontLightLeft = 0;
+public int frontLightLeft = 2;
 
 // Corrected enum definition to have consistent naming and added missing state
 enum ArmState{
-    Up,
-    Down // Added Down state
+    Down,
+    Up1,
+    Up2,
+    Up3.
 };
+
 
 // Redesigned to be a singleton class for managing arm state
 class ArmStateManager {
@@ -39,13 +54,13 @@ public:
         while(true){
 
             switch(state){
-                case(Up):
-                    mrp(3, 200, 280);
-                    bmd(3);
-                    break;
                 case(Down):
-                    mrp(3, -200, 280);
-                    bmd(3);
+                    break;
+                case(Up1):
+                    break;
+                case(Up2):
+                    break;
+                case(Up3):
                     break;
             }
 
