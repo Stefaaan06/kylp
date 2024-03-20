@@ -1,1 +1,1 @@
-CMakeLists.txt not found in C:\Projects\robotik Select CMakeLists.txt
+CMakeLists.txt not found in C:\Users\ste32\CLionProjects\kylp Select CMakeLists.txt
