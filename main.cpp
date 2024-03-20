@@ -7,26 +7,27 @@
 #include <thread>
 
 
-public int motorLeft = 0;
-public int motorRight = 1;
+int motorLeft = 0;
+int motorRight = 1;
 
-public int armBottom = 2;
-public int armTop = 3;
+int armBottom = 2;
+int armTop = 3;
 
 
-//analog!
-public int clawFront = 5;
+//servos
+int clawFront = 0;
+int clawArm = 1;
 
-public intStartLight = 1;
-public int frontLightLeft = 0;
-public int frontLightLeft = 2;
+int StartLight = 1;
+int frontLightLeft = 0;
+int frontLightRight = 2;
 
 // Corrected enum definition to have consistent naming and added missing state
 enum ArmState{
     Down,
     Up1,
     Up2,
-    Up3.
+    Up3
 };
 
 
@@ -35,10 +36,10 @@ class ArmStateManager {
 private:
     ArmState state;
     static ArmStateManager* instance;
-
-    ArmStateManager() : state(Base) {} // Private constructor
-
 public:
+
+    ArmStateManager() : state(Down) {}
+
     // Deleted copy constructor and assignment operator to prevent copying
     ArmStateManager(const ArmStateManager&) = delete;
     ArmStateManager& operator=(const ArmStateManager&) = delete;
@@ -52,7 +53,6 @@ public:
 
     void ArmStateManagerLoop(){
         while(true){
-
             switch(state){
                 case(Down):
                     break;
@@ -97,18 +97,46 @@ public:
 
 
 
-class ArmUp : public Command {
+class ArmUp1 : public Command {
 public:
     void execute() override {
         // Implement motor control to lift the arm
-        // Example: mav(motor_port, speed);
-        ArmStateManager::getInstance()->setState(Up);
+        mrp(armBottom, 200, 50);
+        ArmStateManager::getInstance()->setState(Up1);
     }
 
     void undo() override {
 
     }
 };
+
+class ArmUp2 : public Command {
+public:
+    void execute() override {
+        // Implement motor control to lift the arm
+        mrp(armBottom, 200, 50);
+        ArmStateManager::getInstance()->setState(Up1);
+    }
+
+    void undo() override {
+
+    }
+};
+
+
+class ArmUp3 : public Command {
+public:
+    void execute() override {
+        // Implement motor control to lift the arm
+        mrp(armBottom, 200, 50);
+        ArmStateManager::getInstance()->setState(Up1);
+    }
+
+    void undo() override {
+
+    }
+};
+
 
 class ArmDown : public Command {
 public:
@@ -126,9 +154,7 @@ public:
 class OpenClawCommand : public Command {
 public:
     void execute() override {
-        //analog 5
-        mrp(5, 200, 280);
-        bmd(3);
+        set_servo_position(clawFront, 100)
     }
 
     void undo() override {
@@ -139,8 +165,29 @@ public:
 class CloseClawCommand : public Command {
 public:
     void execute() override {
-        mrp(5gt, 200, -280);
-        bmd(5);
+        set_servo_position(clawFront, 0)
+    }
+
+    void undo() override {
+
+    }
+};
+
+class OpenArmClawCommand : public Command {
+public:
+    void execute() override {
+        set_servo_position(clawArm, 100)
+    }
+
+    void undo() override {
+
+    }
+};
+
+class CloseArmClawCommand : public Command {
+public:
+    void execute() override {
+        set_servo_position(clawFront, 0)
     }
 
     void undo() override {
@@ -263,7 +310,7 @@ private:
 
 public:
     Aufgabe1(ArmStateManager* armStateManager) : taskStarted(false) {
-        controller->addCommand(new DriveCommand(3000, 3600));
+        controller->addCommand(new ArmUp1());
     }
 
     void start() override {
@@ -302,7 +349,7 @@ private:
 
 public:
     Aufgabe2(ArmStateManager* armStateManager) : taskStarted(false) {
-        controller->addCommand(new DriveCommand(1000, 1000));
+        controller->addCommand(new DriveCommand(1000, 100));
     }
 
     void start() override {
@@ -339,7 +386,7 @@ private:
 
 public:
     Aufgabe3(ArmStateManager* armStateManager) : taskStarted(false) {
-        controller->addCommand(new DriveCommand(3000, 500));
+        controller->addCommand(new DriveCommand(3000, 100));
 
     }
 
@@ -474,9 +521,10 @@ public:
 };
 
 
-public ArmStateManager armStateManager;
-
 int main() {
+
+    enable_servo(clawFront);
+    enable_servo(clawArm);
 
     //wait for start light
 
@@ -492,6 +540,8 @@ int main() {
     TaskState currentState = Aufgabe1State;
     actionSequencer(currentState, armStateManager);
 
+    disable_servo(clawFront);
+    disable_servo(clawArm);
 
     return 0;
 
